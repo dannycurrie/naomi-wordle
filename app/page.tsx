@@ -45,7 +45,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    fetch('api/word').then(res => res.json()).then(data => {
+    fetch('api/word', { cache: 'no-store' }).then(res => res.json()).then(data => {
       setWord(data.word)
     })
   }, [])
