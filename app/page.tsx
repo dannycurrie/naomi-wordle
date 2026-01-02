@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react"
 import { Cell } from "./types"
 import { colouriseRow, getRowWord } from "./utils"
+import Link from "next/link"
 
 
 const getCellColour = (status: "correct" | "incorrect" | "present" | "pending") => {
@@ -155,6 +156,9 @@ export default function Home() {
               ))}
             </div>
           ))}
+        </div>
+        <div className="flex flex-row items-center gap-2">
+          Login as <Link href="/admin" className="text-blue-500 hover:text-blue-700">Dad</Link>
         </div>
       </div>
     </main>

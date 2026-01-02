@@ -83,7 +83,7 @@ export default function Admin() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Admin Login</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Dad&apos;s Login</h1>
           <p className="text-sm text-gray-600 mb-6">Only Dad knows the password!</p>
           
           <div className="mb-4">
@@ -121,7 +121,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Admin Panel</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Word Admin</h1>
         
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="px-6 py-4 bg-gray-100 border-b border-gray-200">
