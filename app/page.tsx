@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Cell } from "./types"
 import { colouriseRow, getRowWord } from "./utils"
 
@@ -28,6 +28,7 @@ export default function Home() {
 
   const [currentCell, setCurrentCell] = useState<[number, number]>([0,0])
   const [grid, setGrid] = useState<Cell[][]>(Array.from({ length: rows }, () => Array(cols).fill({ letter: "", status: "pending" })))
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const guess = async() => {
     setLoading(true)
@@ -66,44 +67,65 @@ export default function Home() {
     })
   }, [])
 
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (gameOver) {
-        window.removeEventListener("keydown", handleKeyPress)
-        return
-      }
-      if (event.key.length === 1 && event.key.match(/[a-z]/i) && currentCell[1] < cols) {
-        const newGrid = [...grid]
-        const newRow = [...newGrid[currentCell[0]]]
-        newRow[currentCell[1]] = { letter: event.key.toUpperCase(), status: "pending" }
-        newGrid[currentCell[0]] = newRow
-        setGrid(newGrid)
-        setCurrentCell([currentCell[0], currentCell[1] + 1])
-      } else if (event.key === "Backspace" && currentCell[1] > 0) {
-        const newCol = currentCell[1] - 1
-        const newGrid = [...grid]
-        const newRow = [...newGrid[currentCell[0]]]
-        newRow[newCol] = { letter: "", status: "pending" }
-        newGrid[currentCell[0]] = newRow
-        setGrid(newGrid)
-        setCurrentCell([currentCell[0], newCol])
-      } else if (event.key === "Enter" && currentCell[0] < rows && currentCell[1] === cols) {
-        guess()
-      }
+  const handleInput = (key: string) => {
+    if (gameOver) return
+    
+    if (key.length === 1 && key.match(/[a-z]/i) && currentCell[1] < cols) {
+      const newGrid = [...grid]
+      const newRow = [...newGrid[currentCell[0]]]
+      newRow[currentCell[1]] = { letter: key.toUpperCase(), status: "pending" }
+      newGrid[currentCell[0]] = newRow
+      setGrid(newGrid)
+      setCurrentCell([currentCell[0], currentCell[1] + 1])
+    } else if (key === "Backspace" && currentCell[1] > 0) {
+      const newCol = currentCell[1] - 1
+      const newGrid = [...grid]
+      const newRow = [...newGrid[currentCell[0]]]
+      newRow[newCol] = { letter: "", status: "pending" }
+      newGrid[currentCell[0]] = newRow
+      setGrid(newGrid)
+      setCurrentCell([currentCell[0], newCol])
+    } else if (key === "Enter" && currentCell[0] < rows && currentCell[1] === cols) {
+      guess()
     }
-    window.addEventListener("keydown", handleKeyPress)
-    return () => {
-      window.removeEventListener("keydown", handleKeyPress)
-    }
-  }, [word, currentCell, grid])
+  }
 
-  console.log(gameOver);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear the input value as we handle it via onKeyDown
+    e.target.value = ""
+  }
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    handleInput(e.key)
+  }
+
+  const handleMainClick = () => {
+    if (!gameOver && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }
 
   return (
-    <main className={`flex min-h-screen flex-col items-center justify-center bg-white p-8 
-    ${loading ? "animate-pulse" : "animate-none"}
-    ${invalidWord ? "animate-wobble" : ""}
-    `}>
+    <main 
+      className={`flex min-h-screen flex-col items-center justify-center bg-white p-8 
+      ${loading ? "animate-pulse" : "animate-none"}
+      ${invalidWord ? "animate-wobble" : ""}
+      `}
+      onClick={handleMainClick}
+    >
+      <input
+        ref={inputRef}
+        type="text"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck="false"
+        inputMode="text"
+        className="absolute opacity-0 pointer-events-none w-0 h-0"
+        onChange={handleInputChange}
+        onKeyDown={handleInputKeyDown}
+      />
       <div className="flex flex-col items-center gap-8">
         <h1 className={`text-4xl font-bold text-gray-900 ${loading ? "animate-pulse" : "animate-none"}`}>Naomi Wordle</h1>
         {gameOver && (
