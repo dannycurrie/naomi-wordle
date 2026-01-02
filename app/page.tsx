@@ -23,12 +23,27 @@ export default function Home() {
 
   const [word, setWord] = useState<string>("")
   const [gameOver, setGameOver] = useState<"win" | "lose" | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [invalidWord, setInvalidWord] = useState<boolean>(false)
 
   const [currentCell, setCurrentCell] = useState<[number, number]>([0,0])
   const [grid, setGrid] = useState<Cell[][]>(Array.from({ length: rows }, () => Array(cols).fill({ letter: "", status: "pending" })))
 
-  const guess = () => {
+  const guess = async() => {
+    setLoading(true)
     const guess = getRowWord(grid[currentCell[0]])
+    const isValid = await fetch('api/isValid', {
+      method: 'POST',
+      body: JSON.stringify({ word: guess }),
+    }).then(res => res.json()).then(data => data.isValid)
+    setLoading(false)
+    if (!isValid) {
+      setInvalidWord(true)
+      setTimeout(() => {
+        setInvalidWord(false)
+      }, 2000)
+      return
+    }
     if (guess === word) {
       setGameOver("win")
       alert("You win!")
@@ -45,8 +60,11 @@ export default function Home() {
   }
 
   useEffect(() => {
+    setLoading(true)
     fetch('api/word', { cache: 'no-store' }).then(res => res.json()).then(data => {
       setWord(data.word)
+    }).finally(() => {
+      setLoading(false)
     })
   }, [])
 
@@ -82,13 +100,25 @@ export default function Home() {
   }, [word, currentCell, grid])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-white p-8">
+    <main className={`flex min-h-screen flex-col items-center justify-center bg-white p-8 
+    ${loading ? "animate-pulse" : "animate-none"}
+    ${invalidWord ? "animate-wobble" : ""}
+    `}>
       <div className="flex flex-col items-center gap-8">
-        <h1 className="text-4xl font-bold text-gray-900">Naomi Wordle</h1>
+        <h1 className={`text-4xl font-bold text-gray-900 ${loading ? "animate-pulse" : "animate-none"}`}>Naomi Wordle</h1>
         {gameOver && (
           <div className="flex flex-col items-center gap-2">
             <h2 className="text-2xl font-bold text-gray-900">Game Over</h2>
             <p className="text-lg text-gray-900">You {gameOver === "win" ? "win" : "lose"}!</p>
+          </div>
+        )}
+        {invalidWord ? (
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-lg text-gray-900">That&apos;s not a valid word!</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-lg text-gray-900">You have {rows - currentCell[0]} guesses left</p>
           </div>
         )}
         <div className="flex flex-col gap-2">
