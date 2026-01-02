@@ -46,10 +46,8 @@ export default function Home() {
     }
     if (guess === word) {
       setGameOver("win")
-      alert("You win!")
-    } else if (currentCell[0] >= rows) {
+    } else if (currentCell[0] >= rows - 1) {
       setGameOver("lose")
-      alert("You lose!")
     }
 
     const newGrid = [...grid]
@@ -99,6 +97,8 @@ export default function Home() {
     }
   }, [word, currentCell, grid])
 
+  console.log(gameOver);
+
   return (
     <main className={`flex min-h-screen flex-col items-center justify-center bg-white p-8 
     ${loading ? "animate-pulse" : "animate-none"}
@@ -109,7 +109,7 @@ export default function Home() {
         {gameOver && (
           <div className="flex flex-col items-center gap-2">
             <h2 className="text-2xl font-bold text-gray-900">Game Over</h2>
-            <p className="text-lg text-gray-900">You {gameOver === "win" ? "win" : "lose"}!</p>
+            <p className="text-lg text-gray-900">You {gameOver === "win" ? "win 😄" : "lose 😥"}!</p>
           </div>
         )}
         {invalidWord ? (
