@@ -6,5 +6,6 @@ export const customWords = [
     "GRANDMA",
     "GRANNY",
     "GRANDAD",
-    "POPPY"
+    "POPPY",
+    "OREO"
 ];

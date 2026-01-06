@@ -45,8 +45,25 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const { word } = await request.json();
+  
+  // Validate word length (4-10 characters)
+  if (!word || typeof word !== 'string') {
+    return NextResponse.json(
+      { error: 'Word is required and must be a string' },
+      { status: 400 }
+    );
+  }
+
+  const wordLength = word.trim().length;
+  if (wordLength < 4 || wordLength > 10) {
+    return NextResponse.json(
+      { error: 'Word must be between 4 and 10 characters long' },
+      { status: 400 }
+    );
+  }
+
   await prisma.word.create({
-    data: { word: word },
+    data: { word: word.trim().toUpperCase() },
   });
   return NextResponse.json({ success: true });
 }

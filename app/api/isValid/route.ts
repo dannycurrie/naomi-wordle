@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { customWords } from './customWords';
 
-export const dynamic = 'force-dynamic';
-
 export async function POST(request: Request) {
   const { word } = await request.json();
   if (customWords.includes(word)) {

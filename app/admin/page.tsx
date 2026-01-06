@@ -8,6 +8,7 @@ export default function Admin() {
   const [words, setWords] = useState<WordOption[]>([]);
   const [error, setError] = useState<string>("");
   const [newWord, setNewWord] = useState<string>("");
+  const [wordError, setWordError] = useState<string>("");
 
   useEffect(() => {
     if (authenticated) {
@@ -63,20 +64,50 @@ export default function Admin() {
   }
 
   const handleNewWordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value);
-    console.log(e);
-    setNewWord(e.target.value.toUpperCase());
+    const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+    setNewWord(value);
+    
+    // Validate word length
+    if (value.length > 0 && (value.length < 4 || value.length > 10)) {
+      setWordError('Word must be between 4 and 10 characters');
+    } else {
+      setWordError('');
+    }
   }
 
-  const handleAddWord = () => {
-    fetch('/api/words', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ word: newWord }),
-    });
-    setWords([...words, { id: words.length + 1, word: newWord, createdAt: new Date().toISOString(), isCurrentWord: false }]);
+  const handleAddWord = async () => {
+    if (newWord.length < 4 || newWord.length > 10) {
+      setWordError('Word must be between 4 and 10 characters');
+      return;
+    }
+
+    setWordError('');
+    try {
+      const response = await fetch('/api/words', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ word: newWord }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setWordError(data.error || 'Failed to add word');
+        return;
+      }
+
+      // Refresh words list
+      const wordsResponse = await fetch('/api/words', {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      const wordsData = await wordsResponse.json();
+      setWords(wordsData.words);
+      setNewWord('');
+    } catch (error) {
+      setWordError('An error occurred while adding the word');
+    }
   }
 
   if (!authenticated) {
@@ -129,8 +160,27 @@ export default function Admin() {
           </div>
 
           <div className="px-6 py-4">
-            <input type="text" value={newWord} onChange={handleNewWordChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter new word" />
-            <button className="px-2 py-1 text-xs font-semibold bg-blue-100 text-white rounded-full hover:bg-blue-300" onClick={() => handleAddWord()}>
+            <div className="mb-2">
+              <input 
+                type="text" 
+                value={newWord} 
+                onChange={handleNewWordChange} 
+                maxLength={10}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                placeholder="Enter new word (4-10 characters)" 
+              />
+              {wordError && (
+                <p className="mt-1 text-sm text-red-600">{wordError}</p>
+              )}
+              {newWord.length > 0 && !wordError && (
+                <p className="mt-1 text-sm text-gray-500">{newWord.length} characters</p>
+              )}
+            </div>
+            <button 
+              className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed" 
+              onClick={handleAddWord}
+              disabled={newWord.length < 4 || newWord.length > 10 || wordError !== ''}
+            >
               Add Word
             </button>
           </div>

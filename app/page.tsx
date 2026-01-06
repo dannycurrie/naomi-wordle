@@ -20,9 +20,9 @@ const getCellColour = (status: "correct" | "incorrect" | "present" | "pending") 
 
 export default function Home() {
   const rows = 6
-  const cols = 5
 
   const [word, setWord] = useState<string>("")
+  const [cols, setCols] = useState<number>(5)
   const [gameOver, setGameOver] = useState<"win" | "lose" | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [invalidWord, setInvalidWord] = useState<boolean>(false)
@@ -33,10 +33,10 @@ export default function Home() {
 
   const guess = async() => {
     setLoading(true)
-    const guess = getRowWord(grid[currentCell[0]])
+    const guessWord = getRowWord(grid[currentCell[0]])
     const isValid = await fetch('api/isValid', {
       method: 'POST',
-      body: JSON.stringify({ word: guess }),
+      body: JSON.stringify({ word: guessWord }),
     }).then(res => res.json()).then(data => data.isValid)
     setLoading(false)
     if (!isValid) {
@@ -46,7 +46,7 @@ export default function Home() {
       }, 2000)
       return
     }
-    if (guess === word) {
+    if (guessWord === word) {
       setGameOver("win")
     } else if (currentCell[0] >= rows - 1) {
       setGameOver("lose")
@@ -62,7 +62,13 @@ export default function Home() {
   useEffect(() => {
     setLoading(true)
     fetch('api/word', { cache: 'no-store' }).then(res => res.json()).then(data => {
-      setWord(data.word)
+      const fetchedWord = data.word
+      setWord(fetchedWord)
+      const wordLength = fetchedWord.length
+      setCols(wordLength)
+      // Initialize grid with correct number of columns
+      setGrid(Array.from({ length: rows }, () => Array(wordLength).fill({ letter: "", status: "pending" })))
+      setCurrentCell([0, 0])
     }).finally(() => {
       setLoading(false)
     })
@@ -115,52 +121,64 @@ export default function Home() {
       `}
       onClick={handleMainClick}
     >
-      <input
-        ref={inputRef}
-        type="text"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck="false"
-        inputMode="text"
-        className="absolute opacity-0 pointer-events-none w-0 h-0"
-        onChange={handleInputChange}
-        onKeyDown={handleInputKeyDown}
-      />
-      <div className="flex flex-col items-center gap-8">
-        <h1 className={`text-4xl font-bold text-gray-900 ${loading ? "animate-pulse" : "animate-none"}`}>Naomi Wordle</h1>
-        {gameOver && (
-          <div className="flex flex-col items-center gap-2">
-            <h2 className="text-2xl font-bold text-gray-900">Game Over</h2>
-            <p className="text-lg text-gray-900">You {gameOver === "win" ? "win 😄" : "lose 😥"}!</p>
-          </div>
-        )}
-        {invalidWord ? (
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-lg text-gray-900">That&apos;s not a valid word!</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-lg text-gray-900">You have {rows - currentCell[0]} guesses left</p>
-          </div>
-        )}
-        <div className="flex flex-col gap-2">
-          {grid.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex gap-2">
-              {grid[rowIndex].map((_, colIndex) => (
-                <div
-                  key={colIndex}
-                  className={`flex h-14 w-14 items-center justify-center border-2 border-gray-300 text-2xl font-bold text-gray-900 ${getCellColour(row[colIndex].status)}`}>  
-                  {row[colIndex].letter}
+      {word === "" ? (
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-lg text-gray-900">Loading...</p>
+        </div>
+      ) : (
+        <>
+          <input
+            ref={inputRef}
+            type="text"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            inputMode="text"
+            className="absolute opacity-0 pointer-events-none w-0 h-0"
+            onChange={handleInputChange}
+            onKeyDown={handleInputKeyDown}
+          />
+          <div className="flex flex-col items-center gap-8">
+            <h1 className={`text-4xl font-bold text-gray-900 ${loading ? "animate-pulse" : "animate-none"}`}>Naomi Wordle</h1>
+            {gameOver && (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-lg text-gray-900">You {gameOver === "win" ? "win 😄" : "lose 😥"}!</p>
+              </div>
+            )}
+            {invalidWord ? (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-lg text-gray-900">That&apos;s not a valid word!</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-lg text-gray-900">Guess a {cols}-letter word</p>
+                <p className="text-sm text-gray-600">You have {rows - currentCell[0]} guesses left</p>
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              {grid.map((row, rowIndex) => (
+                <div key={rowIndex} className="flex gap-2 flex-wrap justify-center">
+                  {grid[rowIndex].map((_, colIndex) => (
+                    <div
+                      key={colIndex}
+                      className={`flex items-center justify-center border-2 border-gray-300 font-bold text-gray-900 ${getCellColour(row[colIndex].status)} ${
+                        cols <= 5 ? 'h-14 w-14 text-2xl' :
+                        cols <= 7 ? 'h-12 w-12 text-xl' :
+                        'h-10 w-10 text-lg'
+                      }`}>  
+                      {row[colIndex].letter}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ))}
-        </div>
-        <div className="flex flex-row items-center gap-2">
-          Login as <Link href="/admin" className="text-blue-500 hover:text-blue-700">Dad</Link>
-        </div>
-      </div>
+            <div className="flex flex-row items-center gap-2">
+              Login as <Link href="/admin" className="text-blue-500 hover:text-blue-700">Dad</Link>
+            </div>
+          </div>
+        </>
+      )}
     </main>
   )
 }
